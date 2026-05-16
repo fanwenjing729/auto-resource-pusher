@@ -1,89 +1,89 @@
-# 每日自动推送优质资源
+# Auto Resource Pusher
 
-每天自动筛选优质内容，通过飞书机器人推送到手机。五篇精选覆盖 GitHub 开源、国内热点、国外科技、AI 动态、国际大事。
+Daily curated digest of quality content, delivered to your phone via Feishu bot. Five articles covering GitHub projects, domestic news, foreign tech, AI updates, and world affairs.
 
-## 工作流程
+## Pipeline
 
 ```
-信息源 (4个)          规则初筛           AI精选           链接检查          飞书推送
+Sources (4)          Rule Filter        AI Curate         Link Check        Push
 ┌──────────┐      ┌──────────┐      ┌──────────┐      ┌──────────┐      ┌──────────┐
-│ GitHub    │      │          │      │          │      │          │      │ GitHub最热 │
-│ HackerNews│──75条→│ 打分取30  │──→│ DeepSeek │──→│ HEAD可达  │──→│ 国内热点  │
-│ 掘金      │      │ 来源保底  │      │ 5主题各选1│      │ 超时补位  │      │ 国外热点  │
-│ 今日头条  │      │          │      │          │      │          │      │ AI发展    │
-└──────────┘      └──────────┘      └──────────┘      └──────────┘      │ 国际大事  │
+│ GitHub    │      │          │      │          │      │          │      │ Hottest  │
+│ HackerNews│──75→│ Score 30 │──→│ DeepSeek │──→│ HEAD ok? │──→│ Domestic │
+│ Juejin    │      │ Min/source│     │ 5 themes │      │ Fallback │      │ Foreign  │
+│ Toutiao   │      │          │      │          │      │          │      │ AI News  │
+└──────────┘      └──────────┘      └──────────┘      └──────────┘      │ World    │
                                                                         └──────────┘
 ```
 
-## 快速开始
+## Quick Start
 
-### 1. 安装依赖
+### 1. Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 配置
+### 2. Configure
 
-复制 `.env.example` 为 `.env`，填入真实值：
+Copy `.env.example` to `.env` and fill in your credentials:
 
 ```env
 FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxxxx
-FEISHU_KEYWORD=你的安全关键词
+FEISHU_KEYWORD=your-security-keyword
 DEEPSEEK_API_KEY=sk-xxxxx
 ```
 
-| 变量 | 必填 | 说明 |
-|------|------|------|
-| `FEISHU_WEBHOOK_URL` | 是 | 飞书自定义机器人 Webhook |
-| `FEISHU_KEYWORD` | 否 | 飞书机器人安全关键词 |
-| `DEEPSEEK_API_KEY` | 否 | DeepSeek API Key，不填则纯规则筛选 |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `FEISHU_WEBHOOK_URL` | Yes | Feishu custom bot webhook URL |
+| `FEISHU_KEYWORD` | No | Feishu bot security keyword |
+| `DEEPSEEK_API_KEY` | No | DeepSeek API key; skips AI filtering if absent |
 
-### 3. 运行
+### 3. Run
 
 ```bash
 python main.py
 ```
 
-## 自动运行
+## Automation
 
-**Windows 定时任务**：右键 `setup_schedule.ps1` → 使用 PowerShell 运行，每天早上 9:00 自动执行。
+**Windows Task Scheduler**: right-click `setup_schedule.ps1` → Run with PowerShell. Runs daily at 9:00 AM.
 
-## 项目结构
+## Project Structure
 
 ```
 auto-resource-pusher/
-├── main.py                  # 主入口：编排全流程
-├── config.py                # 配置文件（环境变量、权重）
-├── models.py                # Article 数据类
-├── filter.py                # 规则打分 + DeepSeek AI 精选
-├── pusher.py                # 飞书卡片消息推送
+├── main.py                  # Orchestrator
+├── config.py                # Environment config & weights
+├── models.py                # Article dataclass
+├── filter.py                # Rule scoring + DeepSeek AI curation
+├── pusher.py                # Feishu card message builder
 ├── sources/
-│   ├── __init__.py          # 并行聚合
-│   ├── github.py            # GitHub 高星仓库（30天窗口）
-│   ├── hackernews.py        # Hacker News 头条
-│   ├── zhihu.py             # 掘金热门
-│   └── toutiao.py           # 今日头条热榜
-├── pushed.json              # 30天滑动去重记录（自动维护）
+│   ├── __init__.py          # Parallel aggregator
+│   ├── github.py            # GitHub trending repos (30-day window)
+│   ├── hackernews.py        # Hacker News top stories
+│   ├── zhihu.py             # Juejin hot feed
+│   └── toutiao.py           # Toutiao trending board
+├── pushed.json              # 30-day rolling dedup (auto-maintained)
 ├── requirements.txt
-├── .env.example             # 配置模板
-├── setup_schedule.ps1       # Windows 定时任务脚本
-└── run.bat                  # 一键运行
+├── .env.example             # Config template
+├── setup_schedule.ps1       # Windows Task Scheduler setup
+└── run.bat                  # One-click launcher
 ```
 
-## 筛选机制
+## Filtering
 
-### 规则初筛
-关键词匹配 + 指标打分（星标、热度、评论） + 来源权重 → 每源保底 5 篇 → 共 30 篇候选
+### Rule Pre-filter
+Keyword matching + metric scoring (stars, heat, comments) + source weighting → minimum 5 per source → 30 candidates.
 
-### AI 精选
-DeepSeek 按五个主题各选一篇最匹配的文章：
-- GitHub 最热项目
-- 国内热点新闻
-- 国外热点新闻
-- 最新 AI 发展
-- 国际大事
+### AI Curation
+DeepSeek picks one article per theme:
+- Hottest GitHub project
+- Domestic news
+- Foreign news
+- AI developments
+- World affairs
 
-## 去重
+## Deduplication
 
-`pushed.json` 记录已推送的 URL，30 天内不重复。每次运行自动清理过期记录。
+`pushed.json` tracks pushed URLs. Articles from the past 30 days are skipped. Auto-prunes expired entries.
