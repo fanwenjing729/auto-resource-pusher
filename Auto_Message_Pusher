@@ -3,7 +3,7 @@ name: Python Package using Conda
 on: 
   schedule:
     - cron: '00 01 * * *'
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   build-linux:
