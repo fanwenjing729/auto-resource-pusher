@@ -1,5 +1,5 @@
 .env
-pushed.json
+# pushed.json 已加入追踪，Actions 需要它来去重
 __pycache__/
 .venv/
 *.pyc
